@@ -2,7 +2,25 @@
  * Layout Service: Handles saving and restoring Golden Layout configurations
  */
 
-const STORAGE_KEY = 'dashboard_layout';
+const STORAGE_KEY = 'dashboard_layout_v3_clean';
+
+// Clean up old keys on init
+const cleanupOldKeys = () => {
+  const oldKeys = ['dashboard_layout', 'dashboard_layout_v2', 'dashboard_layout_v3'];
+  oldKeys.forEach((key) => {
+    try {
+      localStorage.removeItem(key);
+      console.log(`🧹 Removed old key: ${key}`);
+    } catch (e) {
+      console.warn('Could not remove old key:', key);
+    }
+  });
+};
+
+// Run cleanup on module load
+cleanupOldKeys();
+
+// Use this EXACT format that Golden Layout v2 expects
 const DEFAULT_LAYOUT = {
   version: 2,
   root: {
@@ -15,13 +33,11 @@ const DEFAULT_LAYOUT = {
           {
             type: 'component',
             componentType: 'chart',
-            componentState: {},
             title: 'Chart Panel',
           },
           {
             type: 'component',
             componentType: 'table',
-            componentState: {},
             title: 'Data Table',
           },
         ],
@@ -33,7 +49,6 @@ const DEFAULT_LAYOUT = {
           {
             type: 'component',
             componentType: 'logs',
-            componentState: {},
             title: 'Activity Logs',
           },
         ],
@@ -44,34 +59,58 @@ const DEFAULT_LAYOUT = {
 
 export const saveLayout = (layoutConfig) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(layoutConfig));
-    console.log('Layout saved successfully');
+    if (!layoutConfig || !layoutConfig.root || !layoutConfig.root.content) {
+      console.warn('⚠️ Invalid layout structure:', layoutConfig);
+      return false;
+    }
+
+    // Save ONLY version and root - strip all other fields
+    const cleanConfig = {
+      version: 2,
+      root: layoutConfig.root,
+    };
+
+    const jsonString = JSON.stringify(cleanConfig);
+    localStorage.setItem(STORAGE_KEY, jsonString);
+    console.log('✅ Layout saved:', { size: jsonString.length, panels: countPanels(cleanConfig.root) });
     return true;
   } catch (error) {
-    console.error('Error saving layout:', error);
-    return false;
+    console.error('❌ Save error:', error);
   }
+  return false;
+};
+
+// Helper to count panels
+const countPanels = (node) => {
+  if (!node || !node.content) return 0;
+  let count = 0;
+  node.content.forEach((item) => {
+    if (item.type === 'component') count++;
+    else count += countPanels(item);
+  });
+  return count;
 };
 
 export const loadLayout = () => {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_LAYOUT;
-  } catch (error) {
-    console.error('Error loading layout:', error);
-    return DEFAULT_LAYOUT;
+    // IMPORTANT: Always start with fresh default to avoid corruption issues
+    // Only try to load saved layout if user explicitly imports one
+    console.log('📋 Starting with fresh default layout');
+    return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+  } catch (e) {
+    console.error('❌ Load error:', e);
+    return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
   }
 };
 
 export const resetLayout = () => {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    console.log('Layout reset to default');
-    return DEFAULT_LAYOUT;
+    console.log('🔄 Layout cleared');
   } catch (error) {
-    console.error('Error resetting layout:', error);
-    return DEFAULT_LAYOUT;
+    console.error('❌ Reset error:', error);
   }
+  return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
 };
 
 export const exportLayout = (layoutConfig) => {
@@ -84,9 +123,10 @@ export const exportLayout = (layoutConfig) => {
     link.download = `dashboard-layout-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
+    console.log('📥 Exported');
     return true;
   } catch (error) {
-    console.error('Error exporting layout:', error);
+    console.error('❌ Export error:', error);
     return false;
   }
 };
@@ -96,11 +136,16 @@ export const importLayout = (file) => {
     try {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const layout = JSON.parse(e.target.result);
-        saveLayout(layout);
-        resolve(layout);
+        try {
+          const layout = JSON.parse(e.target.result);
+          saveLayout(layout);
+          console.log('📤 Imported');
+          resolve(layout);
+        } catch (e) {
+          reject(new Error('Invalid file'));
+        }
       };
-      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.onerror = () => reject(new Error('Failed to read'));
       reader.readAsText(file);
     } catch (error) {
       reject(error);
