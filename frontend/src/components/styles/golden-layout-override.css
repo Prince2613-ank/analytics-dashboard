@@ -1,0 +1,100 @@
+/* Golden Layout Theme Overrides */
+
+.lm_root {
+  background: #f9fafb;
+}
+
+.lm_header {
+  background: linear-gradient(to right, #e5e7eb, #d1d5db);
+  border-bottom: 1px solid #d1d5db;
+  height: 32px;
+  line-height: 32px;
+}
+
+.lm_header .lm_tab {
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.lm_header .lm_tab.lm_active {
+  background: #fff;
+  color: #1f2937;
+  border-bottom: 2px solid #667eea;
+}
+
+.lm_header .lm_tab:hover {
+  background: #f3f4f6;
+}
+
+.lm_splitter {
+  background: #e5e7eb;
+}
+
+.lm_splitter:hover {
+  background: #d1d5db;
+}
+
+.lm_content {
+  background: #fff;
+}
+
+.lm_dragProxy {
+  opacity: 0.8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.lm_dropZone {
+  background: rgba(102, 126, 234, 0.1);
+  border: 2px solid #667eea;
+}
+
+/* Close button styling */
+.lm_header .lm_close_tab {
+  float: right;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  margin-top: 6px;
+  margin-right: 6px;
+}
+
+.lm_header .lm_close_tab:hover {
+  opacity: 0.8;
+}
+
+/* Popout button styling */
+.lm_header .lm_popout_icon {
+  background-position: -73px -20px;
+  float: right;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+/* Prevent text selection in headers */
+.lm_header {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+/* Scrollbar styling */
+.lm_content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.lm_content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lm_content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.lm_content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
