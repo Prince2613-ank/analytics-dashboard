@@ -41,6 +41,16 @@ export const getLogs = async (limit = 20) => {
   }
 };
 
+export const getMapData = async () => {
+  try {
+    const response = await api.get('/data/map');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching map data:', error);
+    throw error;
+  }
+};
+
 export const healthCheck = async () => {
   try {
     const response = await api.get('/health');

@@ -120,5 +120,39 @@
     flex: 1;
     min-width: 100px;
   }
-}
 
+  /* Force Golden Layout to stack panels vertically on mobile 1-by-1 */
+  .dashboard-container {
+    overflow-y: auto !important;
+  }
+  
+  .lm_goldenlayout,
+  .lm_root {
+    position: relative !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+  }
+
+  .lm_item {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .lm_stack {
+    height: 350px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .lm_splitter {
+    display: none !important;
+  }
+}

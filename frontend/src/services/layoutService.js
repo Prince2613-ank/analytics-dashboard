@@ -2,7 +2,7 @@
  * Layout Service: Handles saving and restoring Golden Layout configurations
  */
 
-const STORAGE_KEY = 'dashboard_layout_v3_clean';
+const STORAGE_KEY = 'dashboard_layout_v4';
 
 // Clean up old keys on init
 const cleanupOldKeys = () => {
@@ -23,38 +23,46 @@ cleanupOldKeys();
 // Use this EXACT format that Golden Layout v2 expects
 const DEFAULT_LAYOUT = {
   version: 2,
+  settings: {
+    showPopoutIcon: true,
+    showMaximiseIcon: true,
+    showCloseIcon: true,
+  },
   root: {
-    type: 'row',
+    type: "column",
     content: [
       {
-        type: 'column',
-        width: 50,
+        type: "row",
         content: [
           {
-            type: 'component',
-            componentType: 'chart',
-            title: 'Chart Panel',
+            type: "component",
+            componentType: "chart",
+            title: "Chart"
           },
           {
-            type: 'component',
-            componentType: 'table',
-            title: 'Data Table',
-          },
-        ],
+            type: "component",
+            componentType: "map",
+            title: "Map"
+          }
+        ]
       },
       {
-        type: 'column',
-        width: 50,
+        type: "row",
         content: [
           {
-            type: 'component',
-            componentType: 'logs',
-            title: 'Activity Logs',
+            type: "component",
+            componentType: "table",
+            title: "Data Table"
           },
-        ],
-      },
-    ],
-  },
+          {
+            type: "component",
+            componentType: "logs",
+            title: "Activity Logs"
+          }
+        ]
+      }
+    ]
+  }
 };
 
 export const saveLayout = (layoutConfig) => {
@@ -93,8 +101,33 @@ const countPanels = (node) => {
 
 export const loadLayout = () => {
   try {
-    // IMPORTANT: Always start with fresh default to avoid corruption issues
-    // Only try to load saved layout if user explicitly imports one
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      console.log('📋 Restoring layout from localStorage');
+      const parsed = JSON.parse(saved);
+      // Ensure layout root matches GL structure
+      if (parsed && parsed.root) {
+        // Enforce version 2 wrapper if GL didn't save it
+        parsed.version = 2;
+        
+        // Fix Golden Layout v2 bug: aggressively strip any exported dynamic sizes
+        const stripSizes = (node) => {
+          if (!node) return;
+          delete node.size;
+          delete node.width;
+          delete node.height;
+          delete node.sizeUnit;
+          delete node.minSizeUnit;
+          delete node.minSize;
+          if (node.content && Array.isArray(node.content)) {
+            node.content.forEach(stripSizes);
+          }
+        };
+        stripSizes(parsed.root);
+
+        return parsed;
+      }
+    }
     console.log('📋 Starting with fresh default layout');
     return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
   } catch (e) {

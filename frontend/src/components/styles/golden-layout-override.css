@@ -1,42 +1,56 @@
 /* Golden Layout Theme Overrides */
 
 .lm_root {
-  background: #f9fafb;
+  background: #f3f4f6;
+  padding: 8px; /* Adds space around the entire grid */
+  box-sizing: border-box;
 }
 
 .lm_header {
-  background: linear-gradient(to right, #e5e7eb, #d1d5db);
-  border-bottom: 1px solid #d1d5db;
-  height: 32px;
-  line-height: 32px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 8px 8px 0 0;
+  height: 36px;
+  line-height: 36px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  z-index: 1;
 }
 
 .lm_header .lm_tab {
-  color: #374151;
+  color: #6b7280;
   font-size: 13px;
   font-weight: 500;
+  padding: 0 16px;
+  margin-right: 2px;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
 }
 
 .lm_header .lm_tab.lm_active {
-  background: #fff;
+  background: #f9fafb;
   color: #1f2937;
   border-bottom: 2px solid #667eea;
 }
 
 .lm_header .lm_tab:hover {
   background: #f3f4f6;
+  color: #374151;
 }
 
 .lm_splitter {
-  background: #e5e7eb;
+  background: transparent;
+  opacity: 1;
+  transition: background 0.2s;
 }
 
 .lm_splitter:hover {
-  background: #d1d5db;
+  background: rgba(102, 126, 234, 0.2);
 }
 
 .lm_content {
-  background: #fff;
+  background: #ffffff;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .lm_dragProxy {

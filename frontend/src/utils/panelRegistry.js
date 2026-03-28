@@ -1,6 +1,7 @@
 import ChartPanel from '../components/panels/ChartPanel';
 import TablePanel from '../components/panels/TablePanel';
 import LogsPanel from '../components/panels/LogsPanel';
+import MapPanel from '../components/panels/MapPanel';
 
 /**
  * Panel Registry: Maps panel types to their React components
@@ -21,6 +22,11 @@ export const PANEL_REGISTRY = {
     component: LogsPanel,
     title: 'Activity Logs',
     icon: '📝',
+  },
+  map: {
+    component: MapPanel,
+    title: 'Map',
+    icon: '🗺️',
   },
 };
 

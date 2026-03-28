@@ -16,8 +16,7 @@ const ChartPanel = () => {
         // Transform data for Recharts
         const transformedData = chartData.labels.map((label, index) => ({
           name: label,
-          Revenue: chartData.datasets[0].data[index],
-          Expenses: chartData.datasets[1].data[index],
+          Sales: chartData.datasets[0] ? chartData.datasets[0].data[index] : 0,
         }));
         setData(transformedData);
         setError(null);
@@ -37,7 +36,7 @@ const ChartPanel = () => {
 
   return (
     <div className="panel-content">
-      <h3>Revenue vs Expenses</h3>
+      <h3>Sales Performance</h3>
       {data && (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>
@@ -46,8 +45,7 @@ const ChartPanel = () => {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="Revenue" stroke="#4bc0c0" />
-            <Line type="monotone" dataKey="Expenses" stroke="#ff6384" />
+            <Line type="monotone" dataKey="Sales" stroke="#4bc0c0" />
           </LineChart>
         </ResponsiveContainer>
       )}

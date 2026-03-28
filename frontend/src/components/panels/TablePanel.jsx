@@ -42,10 +42,10 @@ const TablePanel = () => {
               </tr>
             </thead>
             <tbody>
-              {data.rows.map((row) => (
-                <tr key={row.id}>
+              {data.rows.map((row, index) => (
+                <tr key={index}>
                   {data.columns.map((col) => (
-                    <td key={`${row.id}-${col}`}>{row[col]}</td>
+                    <td key={`${index}-${col}`}>{row[col]}</td>
                   ))}
                 </tr>
               ))}

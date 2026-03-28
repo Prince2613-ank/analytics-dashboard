@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoldenLayout } from 'golden-layout';
 import { getPanelComponent, PANEL_REGISTRY } from '../utils/panelRegistry';
-import { loadLayout, saveLayout, resetLayout } from '../services/layoutService';
+import { loadLayout, saveLayout, resetLayout, exportLayout } from '../services/layoutService';
 import './styles/dashboard.css';
 import './styles/golden-layout-override.css';
 
@@ -153,6 +153,10 @@ const Dashboard = () => {
         // Save on ALL changes
         glLayout.on('stateChanged', () => {
           if (isInitializedRef.current) {
+            // Wait for popouts to close before saving layout
+            if (glLayout.isSubWindow || (glLayout.openPopouts && glLayout.openPopouts.length > 0)) {
+               return;
+            }
             try {
               const config = glLayout.toConfig();
               console.log('📝 Layout changed, saving...');
@@ -167,6 +171,10 @@ const Dashboard = () => {
         // Save when item destroyed
         glLayout.on('itemDestroyed', () => {
           if (isInitializedRef.current) {
+            // Do not save if it's a popout triggering the destroy
+            if (glLayout.isSubWindow || (glLayout.openPopouts && glLayout.openPopouts.length > 0)) {
+               return;
+            }
             setTimeout(() => {
               try {
                 const config = glLayout.toConfig();
@@ -398,6 +406,9 @@ const Dashboard = () => {
           </div>
           <button className="btn btn-reset" onClick={handleReset}>
             🔄 Reset Layout
+          </button>
+          <button className="btn btn-export" onClick={() => exportLayout(layoutRef.current.toConfig())}>
+            📥 Export JSON
           </button>
         </div>
       </div>
