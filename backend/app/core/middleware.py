@@ -1,7 +1,7 @@
 import time
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.log import ActivityLog
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -49,8 +49,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 return
                 
             log = ActivityLog(
-                timestamp=datetime.now().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 type=level,
+                category="SYSTEM",
                 action=action,
                 message=message
             )

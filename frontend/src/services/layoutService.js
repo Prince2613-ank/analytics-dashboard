@@ -65,6 +65,31 @@ const DEFAULT_LAYOUT = {
   }
 };
 
+// Recursively sanitizes layout nodes to ensure dimensions are strings, 
+// as Golden Layout v2 expects strings during init but exports numbers.
+const sanitizeLayoutNode = (node) => {
+  if (!node) return;
+
+  // Fields that Golden Layout's parser expects to be strings (e.g., "50%")
+  const dimensionFields = ['width', 'height', 'size'];
+
+  dimensionFields.forEach(field => {
+    if (typeof node[field] === 'number') {
+      // Convert to string with percentage unit for GL's internal parser
+      node[field] = `${node[field]}%`;
+    }
+  });
+
+  if (node.content && Array.isArray(node.content)) {
+    node.content.forEach(sanitizeLayoutNode);
+  }
+};
+
+// Validates that a config object is a valid Golden Layout v2 configuration
+const isValidConfig = (config) => {
+  return !!(config && config.version === 2 && config.root && config.root.type);
+};
+
 export const saveLayout = (layoutConfig) => {
   try {
     if (!layoutConfig || !layoutConfig.root || !layoutConfig.root.content) {
@@ -72,15 +97,18 @@ export const saveLayout = (layoutConfig) => {
       return false;
     }
 
-    // Save ONLY version and root - strip all other fields
-    const cleanConfig = {
+    // Deep clone to avoid mutating the live layout instance state
+    const cleanConfig = JSON.parse(JSON.stringify({
       version: 2,
       root: layoutConfig.root,
-    };
+    }));
+
+    // Sanitize numeric sizes to strings before saving to localStorage
+    sanitizeLayoutNode(cleanConfig.root);
 
     const jsonString = JSON.stringify(cleanConfig);
     localStorage.setItem(STORAGE_KEY, jsonString);
-    console.log('✅ Layout saved:', { size: jsonString.length, panels: countPanels(cleanConfig.root) });
+    console.log('✅ Layout saved with preserved sizes');
     return true;
   } catch (error) {
     console.error('❌ Save error:', error);
@@ -88,46 +116,24 @@ export const saveLayout = (layoutConfig) => {
   return false;
 };
 
-// Helper to count panels
-const countPanels = (node) => {
-  if (!node || !node.content) return 0;
-  let count = 0;
-  node.content.forEach((item) => {
-    if (item.type === 'component') count++;
-    else count += countPanels(item);
-  });
-  return count;
-};
-
 export const loadLayout = () => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      console.log('📋 Restoring layout from localStorage');
+      console.log('📋 Attempting to restore layout from localStorage');
       const parsed = JSON.parse(saved);
-      // Ensure layout root matches GL structure
-      if (parsed && parsed.root) {
-        // Enforce version 2 wrapper if GL didn't save it
-        parsed.version = 2;
-        
-        // Fix Golden Layout v2 bug: aggressively strip any exported dynamic sizes
-        const stripSizes = (node) => {
-          if (!node) return;
-          delete node.size;
-          delete node.width;
-          delete node.height;
-          delete node.sizeUnit;
-          delete node.minSizeUnit;
-          delete node.minSize;
-          if (node.content && Array.isArray(node.content)) {
-            node.content.forEach(stripSizes);
-          }
-        };
-        stripSizes(parsed.root);
 
+      // Basic validation
+      if (isValidConfig(parsed)) {
+        // Sanitize on load as a safety measure for any legacy numeric data
+        sanitizeLayoutNode(parsed.root);
+        console.log('✅ Valid layout restored with preserved sizes');
         return parsed;
+      } else {
+        console.warn('⚠️ Stored layout was invalid or outdated, falling back to default');
       }
     }
+
     console.log('📋 Starting with fresh default layout');
     return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
   } catch (e) {

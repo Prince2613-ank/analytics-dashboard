@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { GoldenLayout } from 'golden-layout';
 import { getPanelComponent, PANEL_REGISTRY } from '../utils/panelRegistry';
 import { loadLayout, saveLayout, resetLayout, exportLayout } from '../services/layoutService';
+import { createLog } from '../services/api';
 import './styles/dashboard.css';
 import './styles/golden-layout-override.css';
 
@@ -72,15 +73,17 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (!containerRef.current || isInitializedRef.current) return;
-
+    let currentCleanup = null;
+    
     const initLayout = () => {
       try {
-        // Ensure container exists and is visible
         const container = containerRef.current;
-        if (!container) {
-          console.error('❌ Container not found');
-          return;
+        if (!container || isInitializedRef.current) return null;
+
+        // Ensure container is ready for measuring
+        if (container.clientWidth === 0 || container.clientHeight === 0) {
+          console.log('⏳ Container dimensions not ready, retrying...');
+          return null;
         }
 
         console.log('📐 Container dimensions:', {
@@ -88,7 +91,7 @@ const Dashboard = () => {
           height: container.clientHeight,
         });
 
-        // Load layout config (starts fresh with default)
+        // Load layout config
         const layoutConfig = loadLayout();
         console.log('📋 Loading layout with', countPanels(layoutConfig.root), 'panels');
 
@@ -102,6 +105,7 @@ const Dashboard = () => {
             const element = document.createElement('div');
             element.style.width = '100%';
             element.style.height = '100%';
+            element.className = 'panel-wrapper';
 
             // Append to container element
             container.element.appendChild(element);
@@ -117,6 +121,9 @@ const Dashboard = () => {
             // Cleanup on destroy
             container.on('destroy', () => {
               try {
+                // Log panel removal
+                createLog('INFO', 'panel_removed', `Panel "${type}" removed from dashboard`);
+                
                 const stored = rootsRef.current.get(id);
                 if (stored) {
                   stored.root.unmount();
@@ -138,36 +145,34 @@ const Dashboard = () => {
         isInitializedRef.current = true;
         layoutRef.current = glLayout;
 
-        // Save layout AFTER successful initialization
-        setTimeout(() => {
+        // Update active panels state
+        updateActivePanels(glLayout);
+
+        // Save layout after successful initialization
+        const initialSaveTimeout = setTimeout(() => {
           try {
-            const config = glLayout.toConfig();
-            saveLayout(config);
-            updateActivePanels(glLayout);
-            console.log('💾 Initial layout saved to localStorage');
+            if (isInitializedRef.current && glLayout && !glLayout.isDestroyed) {
+              const config = glLayout.toConfig();
+              saveLayout(config);
+              console.log('💾 Initial layout saved to localStorage');
+            }
           } catch (e) {
             console.error('Initial save error:', e);
           }
-        }, 500);
+        }, 800);
 
         // Save on ALL changes
         glLayout.on('stateChanged', () => {
           if (isInitializedRef.current) {
             try {
-              // CRITICAL: Block saving if any sub-windows are active. 
-              // Without this, the main window saves a "partial" layout missing the popped-out panel.
               const openPopouts = glLayout.openPopouts || [];
               if (glLayout.isSubWindow || openPopouts.length > 0) {
-                console.log('⏳ Postponing save: Popout in transition/active');
                 return;
               }
-
               const config = glLayout.toConfig();
-              console.log('📝 Layout changed, saving updated config...');
               saveLayout(config);
               updateActivePanels(glLayout);
             } catch (e) {
-              // Ignore "layout not yet initialised" errors during destruction
               if (!e.message.includes('not yet initialised')) {
                 console.error('Save error:', e);
               }
@@ -175,26 +180,7 @@ const Dashboard = () => {
           }
         });
 
-        // Handle item removal / popout creation
-        glLayout.on('itemDestroyed', () => {
-          if (isInitializedRef.current) {
-            // Give the library time to settle after destruction
-            setTimeout(() => {
-              try {
-                if (glLayout.isSubWindow || (glLayout.openPopouts && glLayout.openPopouts.length > 0)) {
-                   return;
-                }
-                const config = glLayout.toConfig();
-                saveLayout(config);
-                updateActivePanels(glLayout);
-              } catch (e) {
-                // Silently handle transition phase errors
-              }
-            }, 200);
-          }
-        });
-
-        // Handle resize
+        // Handle resize using a dedicated listener
         const handleResize = () => {
           if (layoutRef.current && layoutRef.current.updateSize) {
             layoutRef.current.updateSize();
@@ -202,39 +188,51 @@ const Dashboard = () => {
         };
         window.addEventListener('resize', handleResize);
 
-        // Cleanup function
+        // Cleanup function for this specific initialization
         return () => {
+          console.log('🧹 Cleaning up Golden Layout instance...');
+          clearTimeout(initialSaveTimeout);
           window.removeEventListener('resize', handleResize);
+          
+          isInitializedRef.current = false;
+          
+          // Unmount all React roots
           rootsRef.current.forEach(({ root }) => {
             try {
               root.unmount();
             } catch (e) {
-              console.warn('Unmount error:', e);
+              console.warn('Unmount error during cleanup:', e);
             }
           });
           rootsRef.current.clear();
+
+          // Destroy GL instance
           try {
-            if (layoutRef.current && layoutRef.current.destroy) {
-              layoutRef.current.destroy();
+            if (glLayout && !glLayout.isDestroyed) {
+              glLayout.destroy();
             }
           } catch (e) {
-            console.warn('Destroy error:', e);
+            console.error('GL destroy error:', e);
           }
-          isInitializedRef.current = false;
+          layoutRef.current = null;
         };
       } catch (error) {
         console.error('❌ Initialization error:', error);
-        console.error('Error stack:', error.stack);
+        return null;
       }
     };
 
-    // Small delay to ensure container is measured
-    const timeoutId = setTimeout(() => {
-      const cleanup = initLayout();
-      return cleanup;
-    }, 100);
+    // Use a small delay to ensure the DOM is painted and container dimensions are stable
+    const timerId = setTimeout(() => {
+      currentCleanup = initLayout();
+    }, 150);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timerId);
+      if (currentCleanup) {
+        currentCleanup();
+      }
+    };
   }, []);
 
   // Define default panel positions (column index and order within column)
@@ -289,6 +287,9 @@ const Dashboard = () => {
 
       // Add to the designated row at the fixed index
       row.addItem(itemConfig, target.pos);
+      
+      // Log panel addition
+      createLog('SUCCESS', 'panel_added', `Panel "${type}" added to dashboard`);
       
       console.log(`✅ Panel "${type}" snapped to fixed position Row:${target.row}, Pos:${target.pos}`);
       

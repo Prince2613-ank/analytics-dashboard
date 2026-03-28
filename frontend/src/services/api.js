@@ -31,9 +31,13 @@ export const getTableData = async () => {
   }
 };
 
-export const getLogs = async (limit = 20) => {
+export const getLogs = async (limit = 20, category = null) => {
   try {
-    const response = await api.get(`/logs?limit=${limit}`);
+    let url = `/logs?limit=${limit}`;
+    if (category) {
+      url += `&category=${category}`;
+    }
+    const response = await api.get(url);
     return response.data.data;
   } catch (error) {
     console.error('Error fetching logs:', error);
@@ -58,6 +62,16 @@ export const healthCheck = async () => {
   } catch (error) {
     console.error('Health check failed:', error);
     return { status: 'unhealthy' };
+  }
+};
+
+export const createLog = async (type, action, message) => {
+  try {
+    const response = await api.post('/logs', { type, action, message });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating custom log:', error);
+    return null;
   }
 };
 
