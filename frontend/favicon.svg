@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#ffffff"/>
+  
+  <!-- Chart bars representing 📊 emoji style -->
+  <rect x="8" y="40" width="10" height="14" fill="#FF6B6B" rx="1"/>
+  <rect x="22" y="32" width="10" height="22" fill="#4ECDC4" rx="1"/>
+  <rect x="36" y="24" width="10" height="30" fill="#FFD93D" rx="1"/>
+  <rect x="50" y="16" width="10" height="38" fill="#6BCB77" rx="1"/>
+</svg>

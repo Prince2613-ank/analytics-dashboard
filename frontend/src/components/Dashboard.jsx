@@ -288,6 +288,13 @@ const Dashboard = () => {
       // Add to the designated row at the fixed index
       row.addItem(itemConfig, target.pos);
       
+      // Refresh layout size and trigger re-render
+      setTimeout(() => {
+        if (glLayout && !glLayout.isDestroyed && glLayout.updateSize) {
+          glLayout.updateSize();
+        }
+      }, 50);
+      
       // Log panel addition
       createLog('SUCCESS', 'panel_added', `Panel "${type}" added to dashboard`);
       
@@ -309,7 +316,7 @@ const Dashboard = () => {
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <h1>📊 Analytics Dashboard</h1>
+        <h1>📊 Dashboard</h1>
         <div className="controls">
           <div className="btn-group">
             {Object.entries(PANEL_REGISTRY).map(([type, config]) => {
