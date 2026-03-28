@@ -13,8 +13,8 @@ const api = axios.create({
 
 export const getChartData = async () => {
   try {
-    const response = await api.get('/data/chart');
-    return response.data;
+    const response = await api.get('/chart');
+    return response.data.data;
   } catch (error) {
     console.error('Error fetching chart data:', error);
     throw error;
@@ -23,8 +23,8 @@ export const getChartData = async () => {
 
 export const getTableData = async () => {
   try {
-    const response = await api.get('/data/table');
-    return response.data;
+    const response = await api.get('/table');
+    return response.data.data;
   } catch (error) {
     console.error('Error fetching table data:', error);
     throw error;
@@ -34,7 +34,7 @@ export const getTableData = async () => {
 export const getLogs = async (limit = 20) => {
   try {
     const response = await api.get(`/logs?limit=${limit}`);
-    return response.data;
+    return response.data.data;
   } catch (error) {
     console.error('Error fetching logs:', error);
     throw error;
@@ -43,8 +43,8 @@ export const getLogs = async (limit = 20) => {
 
 export const getMapData = async () => {
   try {
-    const response = await api.get('/data/map');
-    return response.data;
+    const response = await api.get('/map');
+    return response.data.data;
   } catch (error) {
     console.error('Error fetching map data:', error);
     throw error;

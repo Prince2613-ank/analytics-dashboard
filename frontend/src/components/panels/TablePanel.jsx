@@ -30,7 +30,6 @@ const TablePanel = () => {
 
   return (
     <div className="panel-content">
-      <h3>Product Performance</h3>
       {data && (
         <div className="table-wrapper">
           <table className="data-table">

@@ -36,7 +36,6 @@ const ChartPanel = () => {
 
   return (
     <div className="panel-content">
-      <h3>Sales Performance</h3>
       {data && (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>

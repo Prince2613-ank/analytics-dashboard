@@ -6,14 +6,7 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-.panel-content h3 {
-  margin: 0 0 16px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 8px;
-}
+
 
 .panel-content.error {
   color: #dc2626;
@@ -116,3 +109,9 @@
   border-left-color: #ef4444;
   color: #991b1b;
 }
+
+/* Map Zoom Control Re-positioning */
+.leaflet-top.leaflet-left {
+  top: 24px !important;
+}  
+ 

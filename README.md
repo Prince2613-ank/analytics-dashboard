@@ -286,3 +286,9 @@ Feel free to fork and submit pull requests!
 ---
 
 **Ready to build?** Start the backend and frontend, then customize the panels and APIs to your needs!
+
+cd backend
+..\.venv\Scripts\python.exe -m uvicorn main:app --port 8000 --reload
+
+cd frontend
+npm run dev

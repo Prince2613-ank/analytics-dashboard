@@ -37,7 +37,6 @@ const LogsPanel = () => {
 
   return (
     <div className="panel-content">
-      <h3>Activity Logs</h3>
       <div className="logs-container">
         {logs && logs.length > 0 ? (
           logs.map((log) => (

@@ -153,39 +153,44 @@ const Dashboard = () => {
         // Save on ALL changes
         glLayout.on('stateChanged', () => {
           if (isInitializedRef.current) {
-            // Wait for popouts to close before saving layout
-            if (glLayout.isSubWindow || (glLayout.openPopouts && glLayout.openPopouts.length > 0)) {
-               return;
-            }
             try {
+              // CRITICAL: Block saving if any sub-windows are active. 
+              // Without this, the main window saves a "partial" layout missing the popped-out panel.
+              const openPopouts = glLayout.openPopouts || [];
+              if (glLayout.isSubWindow || openPopouts.length > 0) {
+                console.log('⏳ Postponing save: Popout in transition/active');
+                return;
+              }
+
               const config = glLayout.toConfig();
-              console.log('📝 Layout changed, saving...');
+              console.log('📝 Layout changed, saving updated config...');
               saveLayout(config);
               updateActivePanels(glLayout);
             } catch (e) {
-              console.error('Save error:', e);
+              // Ignore "layout not yet initialised" errors during destruction
+              if (!e.message.includes('not yet initialised')) {
+                console.error('Save error:', e);
+              }
             }
           }
         });
 
-        // Save when item destroyed
+        // Handle item removal / popout creation
         glLayout.on('itemDestroyed', () => {
           if (isInitializedRef.current) {
-            // Do not save if it's a popout triggering the destroy
-            if (glLayout.isSubWindow || (glLayout.openPopouts && glLayout.openPopouts.length > 0)) {
-               return;
-            }
+            // Give the library time to settle after destruction
             setTimeout(() => {
               try {
+                if (glLayout.isSubWindow || (glLayout.openPopouts && glLayout.openPopouts.length > 0)) {
+                   return;
+                }
                 const config = glLayout.toConfig();
-                console.log('📝 Panel removed, saving updated layout...');
-                console.log('Remaining panels:', countPanels(config.root));
                 saveLayout(config);
                 updateActivePanels(glLayout);
               } catch (e) {
-                console.error('Save after remove error:', e);
+                // Silently handle transition phase errors
               }
-            }, 150);
+            }, 200);
           }
         });
 
@@ -245,134 +250,51 @@ const Dashboard = () => {
       return;
     }
 
-    // Guard: Check if panel already exists using state
     if (activePanels.has(type)) {
-      console.log('ℹ️ Panel already exists, skipping add');
+      console.log('ℹ️ Panel already exists');
       return;
     }
 
     try {
       const info = PANEL_REGISTRY[type];
-      if (!info) return;
-
       const glLayout = layoutRef.current;
-      const ground = glLayout.root;
+      const root = glLayout.root;
 
-      console.log('🔍 Adding panel to layout at default position');
-
-      if (!ground) {
-        console.error('❌ No root found');
-        return;
+      // Ensure base structure exists
+      if (!root.contentItems.length) {
+        root.addItem({ type: 'column', content: [{ type: 'row', content: [] }, { type: 'row', content: [] }] });
       }
 
-      let base = ground.contentItems[0] || null;
-
-      // Double-check via DOM traversal (backup guard)
-      if (base) {
-        const existing = findComponentItem(base, type);
-        if (existing) {
-          const parent = existing.parent;
-          if (parent && typeof parent.setActiveComponentItem === 'function') {
-            parent.setActiveComponentItem(existing, true);
-          }
-          console.log('ℹ️ Panel already exists, activating instead of adding');
-          return;
-        }
+      const mainColumn = root.contentItems[0];
+      // Ensure we have at least two rows for top/bottom fixed positioning
+      while (mainColumn.contentItems.length < 2) {
+        mainColumn.addItem({ type: 'row', content: [] });
       }
 
-      // If layout is empty, recreate the default two-column structure
-      if (!base) {
-        console.warn('⚠️ Layout is empty, creating base row with columns');
-        ground.addItem({
-          type: 'row',
-          content: [
-            { type: 'column', width: 50, content: [] },
-            { type: 'column', width: 50, content: [] },
-          ],
-        });
-        base = ground.contentItems[0] || null;
-      }
+      const PANEL_MAPPING = {
+        chart: { row: 0, pos: 0 },
+        map: { row: 0, pos: 1 },
+        table: { row: 1, pos: 0 },
+        logs: { row: 1, pos: 1 },
+      };
 
-      if (!base) {
-        console.error('❌ Could not determine base layout container');
-        return;
-      }
+      const target = PANEL_MAPPING[type] || { row: 0, pos: 0 };
+      const row = mainColumn.contentItems[target.row];
+      
+      const itemConfig = {
+        type: 'component',
+        componentType: type,
+        title: info.title,
+      };
 
-      // Ensure we always have at least two columns
-      if (!base.contentItems || base.contentItems.length === 0) {
-        base.addItem({ type: 'column', width: 50, content: [] });
-        base.addItem({ type: 'column', width: 50, content: [] });
-      } else if (base.contentItems.length === 1) {
-        base.addItem({ type: 'column', width: 50, content: [] });
-      }
-
-      // Get the default position for this panel type
-      const position = PANEL_POSITIONS[type] || { column: 0, order: 0 };
-      const targetColumnIndex = position.column;
-      let target = base.contentItems[targetColumnIndex] || base.contentItems[0];
-
-      // Find or use existing stack in the column
-      if (target.contentItems && target.contentItems.length > 0) {
-        const stack = target.contentItems.find((item) => item.type === 'stack');
-        if (stack) {
-          target = stack;
-        }
-      }
-
-      // Calculate insert index based on default order
-      let insertIndex = position.order;
-      if (target.contentItems) {
-        // Count how many panels with lower order already exist
-        let existingLowerOrder = 0;
-        for (const item of target.contentItems) {
-          if (item.isComponent) {
-            const itemType = item.config?.componentType;
-            const itemPos = PANEL_POSITIONS[itemType];
-            if (itemPos && itemPos.order < position.order) {
-              existingLowerOrder++;
-            }
-          }
-        }
-        // Insert after existing panels with lower order
-        insertIndex = Math.min(existingLowerOrder, target.contentItems.length);
-      }
-
-      try {
-        const itemConfig = {
-          type: 'component',
-          componentType: type,
-          title: info.title,
-        };
-
-        if (typeof target.addItem === 'function') {
-          target.addItem(itemConfig, insertIndex);
-        } else if (typeof target.addChild === 'function') {
-          if (typeof insertIndex === 'number') {
-            target.addChild(itemConfig, insertIndex);
-          } else {
-            target.addChild(itemConfig);
-          }
-        }
-        console.log(`✅ Panel "${type}" added at column ${targetColumnIndex}, position ${insertIndex}`);
-      } catch (addError) {
-        console.error('❌ Error while adding panel:', addError);
-        throw addError;
-      }
-
-      // Update state and save
-      setTimeout(() => {
-        try {
-          const config = glLayout.toConfig();
-          saveLayout(config);
-          updateActivePanels(glLayout);
-          console.log('💾 Layout saved after adding panel');
-        } catch (e) {
-          console.error('Save after add error:', e);
-        }
-      }, 200);
+      // Add to the designated row at the fixed index
+      row.addItem(itemConfig, target.pos);
+      
+      console.log(`✅ Panel "${type}" snapped to fixed position Row:${target.row}, Pos:${target.pos}`);
+      
+      updateActivePanels(glLayout);
     } catch (e) {
-      console.error('❌ Add panel error:', e);
-      console.error('Error stack:', e.stack);
+      console.error('❌ Error adding panel:', e);
     }
   };
 

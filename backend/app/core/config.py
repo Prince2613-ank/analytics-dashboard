@@ -1,21 +1,22 @@
-from pydantic_settings import BaseSettings
-
+from typing import List
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    """Application configuration settings."""
+    """Application configuration settings pulled securely from the environment."""
     
     APP_NAME: str = "Analytics Dashboard API"
     DEBUG: bool = True
     
-    # MongoDB Atlas settings
-    MONGO_URI: str = "mongodb+srv://princeraj3835_db_user:xirMawc9OQiySITM@cluster0.9xltfhr.mongodb.net/analytics_db?retryWrites=true&w=majority"
-    MONGO_DB_NAME: str = "analytics_db"
+    # Mandatory MongoDB Atlas settings
+    MONGO_URI: str
+    MONGO_DB_NAME: str
     
-    # CORS settings
-    CORS_ORIGINS: list[str] = ["*"]
+    CORS_ORIGINS: List[str] = ["*"]
     
-    class Config:
-        env_file = ".env"
-
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 settings = Settings()
