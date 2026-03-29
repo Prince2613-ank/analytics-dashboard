@@ -41,13 +41,16 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             raise e
             
     async def _log_request(self, action: str, message: str, level: str) -> None:
-        """Insert log directly into MongoDB."""
+        """Insert log through LogRepository following clean architecture patterns."""
         try:
-            # We fetch the DB client directly config since middleware can't easily use FastAPI DI
+            # Middleware doesn't support FastAPI DI, so we cautiously fetch the database instance
             from app.database.connection import db_obj
+            from app.repositories.log_repository import LogRepository
+
             if db_obj.db is None:
                 return
                 
+            repository = LogRepository(db_obj.db)
             log = ActivityLog(
                 timestamp=datetime.now(timezone.utc).isoformat(),
                 type=level,
@@ -55,6 +58,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 action=action,
                 message=message
             )
-            await db_obj.db["logs"].insert_one(log.model_dump())
+            await repository.insert_log(log)
         except Exception as e:
-            print(f"Failed to write middleware log to DB: {e}")
+            print(f"LoggingMiddleware encountered an error: {e}")

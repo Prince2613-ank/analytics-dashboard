@@ -280,9 +280,14 @@ const Dashboard = () => {
       const row = mainColumn.contentItems[target.row];
       
       const itemConfig = {
+        id: `${type}-${Date.now()}`,
         type: 'component',
         componentType: type,
         title: info.title,
+        componentState: {
+          panelId: type,
+          lastUpdated: Date.now()
+        }
       };
 
       // Add to the designated row at the fixed index
@@ -348,22 +353,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-// Updated frontend components to handle empty API responses gracefully
-// Added fallback UI for "No data available" in all panels
-
-const handleApiResponse = (data, panelType) => {
-  if (!data || data.length === 0) {
-    return <div className="no-data">No data available for {panelType}</div>;
-  }
-  // Render panel content
-};
-
-// Example usage in a panel component
-const ChartPanel = ({ data }) => {
-  return (
-    <div className="chart-panel">
-      {handleApiResponse(data, "Chart")}
-    </div>
-  );
-};

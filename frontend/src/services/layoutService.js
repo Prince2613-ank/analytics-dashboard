@@ -33,31 +33,45 @@ const DEFAULT_LAYOUT = {
     content: [
       {
         type: "row",
+        size: "50%",
         content: [
           {
+            id: "chart-1",
             type: "component",
             componentType: "chart",
-            title: "Chart"
+            title: "Chart",
+            size: "50%",
+            componentState: { panelId: "chart", lastUpdated: Date.now() }
           },
           {
+            id: "map-1",
             type: "component",
             componentType: "map",
-            title: "Map"
+            title: "Map",
+            size: "50%",
+            componentState: { panelId: "map", lastUpdated: Date.now() }
           }
         ]
       },
       {
         type: "row",
+        size: "50%",
         content: [
           {
+            id: "table-1",
             type: "component",
             componentType: "table",
-            title: "Data Table"
+            title: "Data Table",
+            size: "50%",
+            componentState: { panelId: "table", lastUpdated: Date.now() }
           },
           {
+            id: "logs-1",
             type: "component",
             componentType: "logs",
-            title: "Activity Logs"
+            title: "Activity Logs",
+            size: "50%",
+            componentState: { panelId: "logs", lastUpdated: Date.now() }
           }
         ]
       }
@@ -67,21 +81,42 @@ const DEFAULT_LAYOUT = {
 
 // Recursively sanitizes layout nodes to ensure dimensions are strings, 
 // as Golden Layout v2 expects strings during init but exports numbers.
-const sanitizeLayoutNode = (node) => {
+// Recursively sanitizes layout nodes to ensure production standards (IDs, metadata, dimensions).
+// This is a non-destructive upgrade that hydrates missing fields in existing layouts.
+const sanitizeLayoutNode = (node, path = 'root') => {
   if (!node) return;
 
-  // Fields that Golden Layout's parser expects to be strings (e.g., "50%")
+  // 1. Stabilization: Ensure dimensions are strings for Golden Layout v2
   const dimensionFields = ['width', 'height', 'size'];
-
   dimensionFields.forEach(field => {
     if (typeof node[field] === 'number') {
-      // Convert to string with percentage unit for GL's internal parser
       node[field] = `${node[field]}%`;
     }
   });
 
+  if (node.type === 'component') {
+    // 2. Production Hardening: Ensure unique and non-empty "id"
+    if (!node.id || node.id === "") {
+      // Fallback to a structured ID if missing
+      node.id = `${node.componentType || 'panel'}-${path.split('-').pop() || Date.now()}`;
+    }
+
+    // 3. Metadata Hydration: Ensure componentState contains panelId and lastUpdated
+    if (!node.componentState) {
+      node.componentState = {};
+    }
+    
+    // Only set panelId if it doesn't already exist to preserve custom state
+    if (!node.componentState.panelId) {
+      node.componentState.panelId = node.componentType;
+    }
+    
+    // Always update lastUpdated during sanitization (saving/loading/exporting)
+    node.componentState.lastUpdated = Date.now();
+  }
+
   if (node.content && Array.isArray(node.content)) {
-    node.content.forEach(sanitizeLayoutNode);
+    node.content.forEach((child, index) => sanitizeLayoutNode(child, `${path}-${index}`));
   }
 };
 

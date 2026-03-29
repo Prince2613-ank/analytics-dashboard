@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0.."
 echo 🚀 Analytics Dashboard - Setup Script (Windows)
 echo ================================================
 echo.
