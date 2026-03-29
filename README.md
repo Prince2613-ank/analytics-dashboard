@@ -27,8 +27,10 @@ Navigate to the `backend` directory and run the server using the existing virtua
 
 ```bash
 cd backend
-..\.venv\Scripts\python.exe -m pip install -r requirements.txt
-..\.venv\Scripts\python.exe -m uvicorn main:app --port 8000 --reload
+set .env
+python -m venv .venv  
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn main:app --port 8000 --reload
 ```
 > The API will launch at `http://localhost:8000`. Endpoint `/docs` available for Swagger UI.
 
@@ -41,13 +43,3 @@ npm install
 npm run dev
 ```
 > Open `http://localhost:5173` in your browser to interact with the dashboard.
-
----
-
-## 📹 Submission Walkthrough Guide
-
-The application supports all assignment deliverables directly. For your 2-5 min project video, you can showcase:
-1.  **Dashboard Interactivity:** Demonstrate dragging headers to snap panels top/bottom/left/right, and stacked tabs. Showcase column resizing between charts and tables.
-2.  **Data Flow validation:** Highlight the Map (Bonus) UI, Data table, and real-time logs arriving via the WebSocket connection.
-3.  **State Management:** Add panels dynamically using the header buttons. Refresh your browser page to prove the layout persists locally.
-4.  **Utilities:** Utilize the Export JSON button to demonstrate layout object serialization.
