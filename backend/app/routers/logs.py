@@ -1,9 +1,10 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
 from app.services.log_service import LogService
 from app.routers.dependencies import get_log_service
 from app.models.log import ActivityLog
 from datetime import datetime, timezone
+import asyncio
 
 router = APIRouter(tags=["logs"])
 
@@ -28,7 +29,7 @@ async def create_log(
 ):
     """
     Create a custom system activity log from the frontend.
-    Expected payload: { "type": "INFO", "action": "...", "message": "..." }
+    Expected payload: { "type": "INFO", "action": "...", "message": "..." }     
     """
     await log_service.create_log(
         action=log_data.get("action", "unknown"),
@@ -37,3 +38,16 @@ async def create_log(
         category="BUSINESS"
     )
     return {"success": True}
+
+@router.websocket("/logs/stream")
+async def websocket_logs(websocket: WebSocket, log_service: LogService = Depends(get_log_service)):
+    await websocket.accept()
+    try:
+        while True:
+            # Poll the latest logs periodically and send delta if needed,
+            # For simplicity, we just send top logs every 3 seconds to emulate real-time flow
+            logs_data = await log_service.get_logs(page=1, limit=15, category="BUSINESS")
+            await websocket.send_json(logs_data)
+            await asyncio.sleep(3)
+    except WebSocketDisconnect:
+        print("WebSocket client disconnected")

@@ -45,7 +45,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         try:
             # We fetch the DB client directly config since middleware can't easily use FastAPI DI
             from app.database.connection import db_obj
-            if not db_obj.db:
+            if db_obj.db is None:
                 return
                 
             log = ActivityLog(
