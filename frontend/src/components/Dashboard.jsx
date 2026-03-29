@@ -312,10 +312,8 @@ const Dashboard = () => {
   };
 
   const handleReset = () => {
-    if (window.confirm('Reset layout to default?')) {
-      resetLayout();
-      window.location.reload();
-    }
+    resetLayout();
+    window.location.reload();
   };
 
   return (
