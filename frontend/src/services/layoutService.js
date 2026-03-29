@@ -10,9 +10,8 @@ const cleanupOldKeys = () => {
   oldKeys.forEach((key) => {
     try {
       localStorage.removeItem(key);
-      console.log(`🧹 Removed old key: ${key}`);
     } catch (e) {
-      console.warn('Could not remove old key:', key);
+      // Ignore cleanup errors
     }
   });
 };
@@ -128,7 +127,6 @@ const isValidConfig = (config) => {
 export const saveLayout = (layoutConfig) => {
   try {
     if (!layoutConfig || !layoutConfig.root || !layoutConfig.root.content) {
-      console.warn('⚠️ Invalid layout structure:', layoutConfig);
       return false;
     }
 
@@ -143,10 +141,9 @@ export const saveLayout = (layoutConfig) => {
 
     const jsonString = JSON.stringify(cleanConfig);
     localStorage.setItem(STORAGE_KEY, jsonString);
-    console.log('✅ Layout saved with preserved sizes');
     return true;
   } catch (error) {
-    console.error('❌ Save error:', error);
+    // Silence save errors
   }
   return false;
 };
@@ -155,24 +152,19 @@ export const loadLayout = () => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      console.log('📋 Attempting to restore layout from localStorage');
       const parsed = JSON.parse(saved);
 
       // Basic validation
       if (isValidConfig(parsed)) {
         // Sanitize on load as a safety measure for any legacy numeric data
         sanitizeLayoutNode(parsed.root);
-        console.log('✅ Valid layout restored with preserved sizes');
         return parsed;
-      } else {
-        console.warn('⚠️ Stored layout was invalid or outdated, falling back to default');
       }
     }
 
-    console.log('📋 Starting with fresh default layout');
+
     return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
   } catch (e) {
-    console.error('❌ Load error:', e);
     return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
   }
 };
@@ -180,9 +172,8 @@ export const loadLayout = () => {
 export const resetLayout = () => {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    console.log('🔄 Layout cleared');
   } catch (error) {
-    console.error('❌ Reset error:', error);
+    // Ignore reset errors
   }
   return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
 };
@@ -197,10 +188,8 @@ export const exportLayout = (layoutConfig) => {
     link.download = `dashboard-layout-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
-    console.log('📥 Exported');
     return true;
   } catch (error) {
-    console.error('❌ Export error:', error);
     return false;
   }
 };
@@ -213,7 +202,6 @@ export const importLayout = (file) => {
         try {
           const layout = JSON.parse(e.target.result);
           saveLayout(layout);
-          console.log('📤 Imported');
           resolve(layout);
         } catch (e) {
           reject(new Error('Invalid file'));

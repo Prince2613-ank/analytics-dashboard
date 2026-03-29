@@ -59,5 +59,5 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 message=message
             )
             await repository.insert_log(log)
-        except Exception as e:
-            print(f"LoggingMiddleware encountered an error: {e}")
+        except Exception:
+            pass

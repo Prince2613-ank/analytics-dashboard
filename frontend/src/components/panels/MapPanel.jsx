@@ -33,7 +33,6 @@ const MapWatcher = () => {
         // Use a 1000ms debounce to prevent log spam
         moveTimeoutRef.current = setTimeout(() => {
           createLog('INFO', 'map_dragged', 'User moved the map viewport');
-          console.log('🗺️ Map drag logged (debounced)');
         }, 1000);
       },
     });
@@ -55,7 +54,6 @@ const MapPanel = () => {
         setError(null);
       } catch (err) {
         setError('Failed to load map data');
-        console.error(err);
       } finally {
         setLoading(false);
       }

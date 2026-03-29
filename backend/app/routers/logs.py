@@ -50,4 +50,4 @@ async def websocket_logs(websocket: WebSocket, log_service: LogService = Depends
             await websocket.send_json(logs_data)
             await asyncio.sleep(3)
     except WebSocketDisconnect:
-        print("WebSocket client disconnected")
+        pass

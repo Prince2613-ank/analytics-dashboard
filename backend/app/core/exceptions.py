@@ -30,8 +30,6 @@ def setup_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """Catch all unexpected server errors."""
-        # In a real system, print or log the traceback to console/logger
-        print(f"Unhandled Exception: {str(exc)}")
         return JSONResponse(
             status_code=500,
             content=error_response("An unexpected internal server error occurred.")

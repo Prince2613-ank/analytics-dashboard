@@ -16,7 +16,6 @@ const TablePanel = () => {
         setError(null);
       } catch (err) {
         setError('Failed to load table data');
-        console.error(err);
       } finally {
         setLoading(false);
       }

@@ -11,7 +11,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Panel Error:', error, errorInfo);
+    // Silence panel errors but they are still captured by state
   }
 
   render() {

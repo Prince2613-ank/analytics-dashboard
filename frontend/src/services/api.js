@@ -16,7 +16,6 @@ export const getChartData = async () => {
     const response = await api.get('/chart');
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching chart data:', error);
     throw error;
   }
 };
@@ -26,7 +25,6 @@ export const getTableData = async () => {
     const response = await api.get('/table');
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching table data:', error);
     throw error;
   }
 };
@@ -40,7 +38,6 @@ export const getLogs = async (limit = 20, category = null) => {
     const response = await api.get(url);
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching logs:', error);
     throw error;
   }
 };
@@ -50,7 +47,6 @@ export const getMapData = async () => {
     const response = await api.get('/map');
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching map data:', error);
     throw error;
   }
 };
@@ -60,7 +56,6 @@ export const healthCheck = async () => {
     const response = await api.get('/health');
     return response.data;
   } catch (error) {
-    console.error('Health check failed:', error);
     return { status: 'unhealthy' };
   }
 };
@@ -70,7 +65,6 @@ export const createLog = async (type, action, message) => {
     const response = await api.post('/logs', { type, action, message });
     return response.data;
   } catch (error) {
-    console.error('Error creating custom log:', error);
     return null;
   }
 };

@@ -26,7 +26,7 @@ const LogsPanel = () => {
             setLoading(false);
           }
         } catch (e) {
-          console.error("Error parsing logs:", e);
+          // Ignore parse errors in stream
         }
       };
 

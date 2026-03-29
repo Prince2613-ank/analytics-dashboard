@@ -23,7 +23,6 @@ const ChartPanel = () => {
         setError(null);
       } catch (err) {
         setError('Failed to load chart data');
-        console.error(err);
       } finally {
         setLoading(false);
       }

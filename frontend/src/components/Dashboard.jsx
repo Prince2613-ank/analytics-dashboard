@@ -78,7 +78,7 @@ const Dashboard = () => {
       const types = getActivePanelTypes(config.root);
       setActivePanels(types);
     } catch (e) {
-      console.warn('Error updating active panels:', e);
+      // Silence active panel update errors
     }
   };
 
@@ -92,18 +92,12 @@ const Dashboard = () => {
 
         // Ensure container is ready for measuring
         if (container.clientWidth === 0 || container.clientHeight === 0) {
-          console.log('⏳ Container dimensions not ready, retrying...');
           return null;
         }
 
-        console.log('📐 Container dimensions:', {
-          width: container.clientWidth,
-          height: container.clientHeight,
-        });
 
-        // Load layout config
+
         const layoutConfig = loadLayout();
-        console.log('📋 Loading layout with', countPanels(layoutConfig.root), 'panels');
 
         // Create Golden Layout instance
         const glLayout = new GoldenLayout(layoutConfig, container);
@@ -140,17 +134,15 @@ const Dashboard = () => {
                   rootsRef.current.delete(id);
                 }
               } catch (e) {
-                console.warn('Cleanup error:', e);
+                // Ignore cleanup errors
               }
             });
           });
         });
 
-        console.log('✅ Components registered');
 
-        // Initialize layout
+
         glLayout.init();
-        console.log('✅ Golden Layout initialized');
 
         isInitializedRef.current = true;
         layoutRef.current = glLayout;
@@ -164,10 +156,9 @@ const Dashboard = () => {
             if (isInitializedRef.current && glLayout && !glLayout.isDestroyed) {
               const config = glLayout.toConfig();
               saveLayout(config);
-              console.log('💾 Initial layout saved to localStorage');
             }
           } catch (e) {
-            console.error('Initial save error:', e);
+            // Silence initial save error
           }
         }, 800);
 
@@ -183,9 +174,7 @@ const Dashboard = () => {
               saveLayout(config);
               updateActivePanels(glLayout);
             } catch (e) {
-              if (!e.message.includes('not yet initialised')) {
-                console.error('Save error:', e);
-              }
+              // Silence save error
             }
           }
         });
@@ -200,7 +189,6 @@ const Dashboard = () => {
 
         // Cleanup function for this specific initialization
         return () => {
-          console.log('🧹 Cleaning up Golden Layout instance...');
           clearTimeout(initialSaveTimeout);
           window.removeEventListener('resize', handleResize);
           
@@ -211,7 +199,7 @@ const Dashboard = () => {
             try {
               root.unmount();
             } catch (e) {
-              console.warn('Unmount error during cleanup:', e);
+              // Ignore unmount error
             }
           });
           rootsRef.current.clear();
@@ -222,12 +210,11 @@ const Dashboard = () => {
               glLayout.destroy();
             }
           } catch (e) {
-            console.error('GL destroy error:', e);
+            // Ignore GL destroy error
           }
           layoutRef.current = null;
         };
       } catch (error) {
-        console.error('❌ Initialization error:', error);
         return null;
       }
     };
@@ -254,13 +241,11 @@ const Dashboard = () => {
 
   const handleAddPanel = (type) => {
     if (!layoutRef.current || !isInitializedRef.current) {
-      console.warn('⚠️ Layout not ready');
       return;
     }
 
     if (activePanels.has(type)) {
       addToast(`⚠️ ${info.title} is already on the dashboard`);
-      console.log('ℹ️ Panel already exists');
       return;
     }
 
@@ -311,14 +296,11 @@ const Dashboard = () => {
         }
       }, 50);
       
-      // Log panel addition
       createLog('SUCCESS', 'panel_added', `Panel "${type}" added to dashboard`);
-      
-      console.log(`✅ Panel "${type}" snapped to fixed position Row:${target.row}, Pos:${target.pos}`);
       
       updateActivePanels(glLayout);
     } catch (e) {
-      console.error('❌ Error adding panel:', e);
+      // Ignore panel addition error
     }
   };
 
