@@ -60,6 +60,16 @@ const Dashboard = () => {
   const rootsRef = useRef(new Map());
   const isInitializedRef = useRef(false);
   const [activePanels, setActivePanels] = useState(new Set());
+  const [toasts, setToasts] = useState([]);
+
+  // Toast manager
+  const addToast = (message) => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3000);
+  };
 
   // Update active panels state from layout
   const updateActivePanels = (glLayout) => {
@@ -249,6 +259,7 @@ const Dashboard = () => {
     }
 
     if (activePanels.has(type)) {
+      addToast(`⚠️ ${info.title} is already on the dashboard`);
       console.log('ℹ️ Panel already exists');
       return;
     }
@@ -329,7 +340,6 @@ const Dashboard = () => {
                   key={type}
                   className={`btn btn-add-panel ${isActive ? 'btn-disabled' : ''}`}
                   onClick={() => handleAddPanel(type)}
-                  disabled={isActive}
                   title={isActive ? `${config.title} is already on the dashboard` : `Add ${config.title}`}
                 >
                   {config.icon} {config.title}
@@ -346,6 +356,15 @@ const Dashboard = () => {
         </div>
       </div>
       <div className="dashboard-container" ref={containerRef} />
+      
+      {/* Toast Notifications */}
+      <div className="toast-container">
+        {toasts.map((toast) => (
+          <div key={toast.id} className="toast">
+            {toast.message}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
